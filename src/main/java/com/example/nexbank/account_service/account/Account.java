@@ -79,12 +79,4 @@ public class Account {
         }
         this.balance = this.balance.subtract(amount);
     }
-
-    public void debit(BigDecimal amount) {
-        withdraw(amount);
-    }
-
-    public void credit(BigDecimal amount) {
-        deposit(amount);
-    }
 }
