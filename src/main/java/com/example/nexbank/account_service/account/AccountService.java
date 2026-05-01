@@ -5,6 +5,9 @@ import com.example.nexbank.account_service.account.dto.CreateAccountRequest;
 import com.example.nexbank.account_service.account.dto.UpdateAccountRequest;
 import com.example.nexbank.account_service.account.exception.AccountNotFoundException;
 import com.example.nexbank.account_service.account.exception.DuplicateAccountException;
+import com.example.nexbank.account_service.transaction.Transaction;
+import com.example.nexbank.account_service.transaction.TransactionRepository;
+import com.example.nexbank.account_service.transaction.TransactionType;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
@@ -22,6 +25,7 @@ import java.util.concurrent.ThreadLocalRandom;
 public class AccountService {
 
     private final AccountRepository repository;
+    private final TransactionRepository transactionRepository;
 
     @Transactional
     public AccountResponse createAccount(CreateAccountRequest request) {
@@ -122,8 +126,18 @@ public class AccountService {
             throw new IllegalStateException("Cannot deposit to " + account.getStatus() + " account");
         }
 
-        account.deposit(amount);  // Business logic in entity
+        BigDecimal balanceBefore = account.getBalance();
+        account.deposit(amount);
         Account saved = repository.save(account);
+
+        transactionRepository.save(Transaction.builder()
+                .accountId(saved.getId())
+                .type(TransactionType.DEPOSIT)
+                .amount(amount)
+                .balanceBefore(balanceBefore)
+                .balanceAfter(saved.getBalance())
+                .currency(saved.getCurrency())
+                .build());
 
         log.info("Deposit {} {} to account {}", amount, account.getCurrency(), id);
         return AccountResponse.from(saved);
@@ -138,8 +152,18 @@ public class AccountService {
             throw new IllegalStateException("Cannot withdraw from " + account.getStatus() + " account");
         }
 
+        BigDecimal balanceBefore = account.getBalance();
         account.withdraw(amount);
         Account saved = repository.save(account);
+
+        transactionRepository.save(Transaction.builder()
+                .accountId(saved.getId())
+                .type(TransactionType.WITHDRAWAL)
+                .amount(amount)
+                .balanceBefore(balanceBefore)
+                .balanceAfter(saved.getBalance())
+                .currency(saved.getCurrency())
+                .build());
 
         log.info("Withdrawal {} {} from account {}", amount, account.getCurrency(), id);
         return AccountResponse.from(saved);

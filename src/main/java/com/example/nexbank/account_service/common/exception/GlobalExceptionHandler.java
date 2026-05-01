@@ -2,6 +2,9 @@ package com.example.nexbank.account_service.common.exception;
 
 import com.example.nexbank.account_service.account.exception.AccountNotFoundException;
 import com.example.nexbank.account_service.account.exception.DuplicateAccountException;
+import com.example.nexbank.account_service.transaction.exception.TransactionNotFoundException;
+import com.example.nexbank.account_service.transfer.exception.TransferException;
+import com.example.nexbank.account_service.transfer.exception.TransferNotFoundException;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.dao.DataIntegrityViolationException;
@@ -56,6 +59,33 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(HttpStatus.CONFLICT).body(
                 ErrorResponse.of(409, "Conflict",
                         "Data integrity violation — possible duplicate",
+                        request.getRequestURI()));
+    }
+
+    @ExceptionHandler(TransactionNotFoundException.class)
+    public ResponseEntity<ErrorResponse> handleTransactionNotFound(
+            TransactionNotFoundException ex, HttpServletRequest request) {
+        log.warn("Transaction not found: {}", ex.getMessage());
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(
+                ErrorResponse.of(404, "Not Found", ex.getMessage(),
+                        request.getRequestURI()));
+    }
+
+    @ExceptionHandler(TransferNotFoundException.class)
+    public ResponseEntity<ErrorResponse> handleTransferNotFound(
+            TransferNotFoundException ex, HttpServletRequest request) {
+        log.warn("Transfer not found: {}", ex.getMessage());
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(
+                ErrorResponse.of(404, "Not Found", ex.getMessage(),
+                        request.getRequestURI()));
+    }
+
+    @ExceptionHandler(TransferException.class)
+    public ResponseEntity<ErrorResponse> handleTransfer(
+            TransferException ex, HttpServletRequest request) {
+        log.warn("Transfer error: {}", ex.getMessage());
+        return ResponseEntity.unprocessableEntity().body(
+                ErrorResponse.of(422, "Unprocessable Entity", ex.getMessage(),
                         request.getRequestURI()));
     }
 
