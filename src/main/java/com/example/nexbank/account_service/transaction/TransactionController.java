@@ -12,23 +12,21 @@ import org.springframework.web.bind.annotation.*;
 import java.util.UUID;
 
 @RestController
-@RequestMapping("/api/v1/transactions")
+@RequestMapping("/api/v1/accounts")
 @RequiredArgsConstructor
 public class TransactionController {
 
-    private final TransactionService service;
+    private final TransactionHistoryRepository repository;
 
-    @GetMapping("/{id}")
-    public ResponseEntity<TransactionResponse> getById(@PathVariable UUID id) {
-        return ResponseEntity.ok(service.getTransaction(id));
-    }
-
-    @GetMapping("/account/{accountId}")
-    public ResponseEntity<Page<TransactionResponse>> listByAccount(
+    @GetMapping("/{accountId}/transactions")
+    public ResponseEntity<Page<TransactionResponse>> getTransactions(
             @PathVariable UUID accountId,
-            @RequestParam(required = false) TransactionType type,
             @PageableDefault(size = 20, sort = "createdAt",
                     direction = Sort.Direction.DESC) Pageable pageable) {
-        return ResponseEntity.ok(service.listByAccount(accountId, type, pageable));
+        Page<TransactionResponse> transactions = repository
+                .findByAccountIdOrderByCreatedAtDesc(accountId, pageable)
+                .map(TransactionResponse::from);
+
+        return ResponseEntity.ok(transactions);
     }
 }

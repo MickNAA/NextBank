@@ -8,7 +8,8 @@ import org.springframework.stereotype.Repository;
 import java.util.UUID;
 
 @Repository
-public interface TransactionRepository extends JpaRepository<Transaction, UUID> {
-    Page<Transaction> findByAccountId(UUID accountId, Pageable pageable);
-    Page<Transaction> findByAccountIdAndType(UUID accountId, TransactionType type, Pageable pageable);
+public interface TransactionHistoryRepository extends JpaRepository<TransactionHistory, UUID> {
+
+    Page<TransactionHistory> findByAccountIdOrderByCreatedAtDesc(
+            UUID accountId, Pageable pageable);
 }

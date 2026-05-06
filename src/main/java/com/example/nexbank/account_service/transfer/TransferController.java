@@ -5,10 +5,6 @@ import com.example.nexbank.account_service.transfer.dto.TransferResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
-import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -24,10 +20,11 @@ public class TransferController {
     private final TransferService service;
 
     @PostMapping
-    public ResponseEntity<TransferResponse> transfer(@Valid @RequestBody TransferRequest request) {
-        log.debug("POST /api/v1/transfers — {} -> {}",
-                request.sourceAccountId(), request.destinationAccountId());
-        return ResponseEntity.status(HttpStatus.CREATED).body(service.transfer(request));
+    public ResponseEntity<TransferResponse> transfer(
+            @Valid @RequestBody TransferRequest request) {
+        log.debug("POST /api/v1/transfers — ref={}", request.referenceId());
+        TransferResponse response = service.transfer(request);
+        return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
     @GetMapping("/{id}")
@@ -35,11 +32,9 @@ public class TransferController {
         return ResponseEntity.ok(service.getTransfer(id));
     }
 
-    @GetMapping("/account/{accountId}")
-    public ResponseEntity<Page<TransferResponse>> listByAccount(
-            @PathVariable UUID accountId,
-            @PageableDefault(size = 20, sort = "createdAt",
-                    direction = Sort.Direction.DESC) Pageable pageable) {
-        return ResponseEntity.ok(service.listByAccount(accountId, pageable));
+    @GetMapping("/reference/{referenceId}")
+    public ResponseEntity<TransferResponse> getByReference(
+            @PathVariable String referenceId) {
+        return ResponseEntity.ok(service.getTransferByReference(referenceId));
     }
 }
