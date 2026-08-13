@@ -12,4 +12,6 @@ public interface TransactionHistoryRepository extends JpaRepository<TransactionH
 
     Page<TransactionHistory> findByAccountIdOrderByCreatedAtDesc(
             UUID accountId, Pageable pageable);
+    Page<TransactionHistory> findByAccountIdAndType(
+            UUID accountId, TransactionType type, Pageable pageable);
 }

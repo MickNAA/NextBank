@@ -5,8 +5,8 @@ import com.example.nexbank.account_service.account.dto.CreateAccountRequest;
 import com.example.nexbank.account_service.account.dto.UpdateAccountRequest;
 import com.example.nexbank.account_service.account.exception.AccountNotFoundException;
 import com.example.nexbank.account_service.account.exception.DuplicateAccountException;
-import com.example.nexbank.account_service.transaction.Transaction;
-import com.example.nexbank.account_service.transaction.TransactionRepository;
+import com.example.nexbank.account_service.transaction.TransactionHistory;
+import com.example.nexbank.account_service.transaction.TransactionHistoryRepository;
 import com.example.nexbank.account_service.transaction.TransactionType;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -25,7 +25,7 @@ import java.util.concurrent.ThreadLocalRandom;
 public class AccountService {
 
     private final AccountRepository repository;
-    private final TransactionRepository transactionRepository;
+    private final TransactionHistoryRepository historyRepository;
 
     @Transactional
     public AccountResponse createAccount(CreateAccountRequest request) {
@@ -35,7 +35,6 @@ public class AccountService {
             throw new DuplicateAccountException("email", request.email());
         }
 
-        // Generate unique account number
         String accountNumber = generateAccountNumber();
 
         Account account = Account.builder()
@@ -130,13 +129,12 @@ public class AccountService {
         account.deposit(amount);
         Account saved = repository.save(account);
 
-        transactionRepository.save(Transaction.builder()
+        historyRepository.save(TransactionHistory.builder()
                 .accountId(saved.getId())
                 .type(TransactionType.DEPOSIT)
                 .amount(amount)
                 .balanceBefore(balanceBefore)
                 .balanceAfter(saved.getBalance())
-                .currency(saved.getCurrency())
                 .build());
 
         log.info("Deposit {} {} to account {}", amount, account.getCurrency(), id);
@@ -156,13 +154,12 @@ public class AccountService {
         account.withdraw(amount);
         Account saved = repository.save(account);
 
-        transactionRepository.save(Transaction.builder()
+        historyRepository.save(TransactionHistory.builder()
                 .accountId(saved.getId())
                 .type(TransactionType.WITHDRAWAL)
                 .amount(amount)
                 .balanceBefore(balanceBefore)
                 .balanceAfter(saved.getBalance())
-                .currency(saved.getCurrency())
                 .build());
 
         log.info("Withdrawal {} {} from account {}", amount, account.getCurrency(), id);

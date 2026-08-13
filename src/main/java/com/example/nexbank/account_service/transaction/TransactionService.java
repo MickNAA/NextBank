@@ -14,7 +14,7 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class TransactionService {
 
-    private final TransactionRepository repository;
+    private final TransactionHistoryRepository repository;
 
     @Transactional(readOnly = true)
     public TransactionResponse getTransaction(UUID id) {
@@ -25,9 +25,9 @@ public class TransactionService {
 
     @Transactional(readOnly = true)
     public Page<TransactionResponse> listByAccount(UUID accountId, TransactionType type, Pageable pageable) {
-        Page<Transaction> page = (type != null)
+        Page<TransactionHistory> page = (type != null)
                 ? repository.findByAccountIdAndType(accountId, type, pageable)
-                : repository.findByAccountId(accountId, pageable);
+                : repository.findByAccountIdOrderByCreatedAtDesc(accountId, pageable);
         return page.map(TransactionResponse::from);
     }
 }
